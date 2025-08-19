@@ -1,0 +1,96 @@
+<!-- REGISTRATION FORM CARD -->
+<div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
+  <div class="card-body p-4 p-md-5">
+    <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 text-center">Registration Form</h3>
+    
+    <form method="POST" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      {% if form.errors %}
+        <div class="alert alert-danger">
+          <ul class="mb-0">
+            {% for field, errors in form.errors.items %}
+              {% for error in errors %}
+                <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+              {% endfor %}
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          {{ form.first_name }}
+        </div>
+        <div class="col-md-6 mb-4">
+          {{ form.last_name }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          <h6 class="mb-2 pb-1">Gender:</h6>
+          {{ form.gender }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          <label class="form-label">Profile Picture</label>
+          {{ form.profile_pic }}
+        </div>
+        <div class="col-md-6 mb-4">
+          {{ form.university_name }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          {{ form.personal_email }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-4">
+          {{ form.department }}
+        </div>
+        <div class="col-md-6 mb-4">
+          {{ form.branch }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          {{ form.year }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          {{ form.bio }}
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-12 mb-4">
+          {{ form.password }}
+        </div>
+      </div>
+
+      <div class="mt-4 pt-2">
+        <button type="submit" class="btn btn-primary btn-lg w-100">Register</button>
+      </div>
+    </form>
+  </div>
+</div>
+<!-- END REGISTRATION FORM CARD -->
+
+
+<div class="col-md-6 mb-4">
+  {{ form.first_name }}
+  {% if form.first_name.errors %}
+    <div class="text-danger small">
+      {{ form.first_name.errors.as_text }}
+    </div>
+  {% endif %}
+</div>
