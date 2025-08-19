@@ -3,27 +3,33 @@
   <div class="card-body p-4 p-md-5">
     <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 text-center">Registration Form</h3>
     
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" action="{% url 'accounts:register' %}">
       {% csrf_token %}
 
-      {% if form.errors %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      {% if form.non_field_errors %}
         <div class="alert alert-danger">
-          <ul class="mb-0">
-            {% for field, errors in form.errors.items %}
-              {% for error in errors %}
-                <li><strong>{{ field|title }}:</strong> {{ error }}</li>
-              {% endfor %}
-            {% endfor %}
-          </ul>
+          {{ form.non_field_errors }}
         </div>
       {% endif %}
 
       <div class="row">
         <div class="col-md-6 mb-4">
           {{ form.first_name }}
+          {% if form.first_name.errors %}
+            <div class="text-danger small">{{ form.first_name.errors|striptags }}</div>
+          {% endif %}
         </div>
         <div class="col-md-6 mb-4">
           {{ form.last_name }}
+          {% if form.last_name.errors %}
+            <div class="text-danger small">{{ form.last_name.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
@@ -31,6 +37,9 @@
         <div class="col-md-12 mb-4">
           <h6 class="mb-2 pb-1">Gender:</h6>
           {{ form.gender }}
+          {% if form.gender.errors %}
+            <div class="text-danger small">{{ form.gender.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
@@ -38,42 +47,85 @@
         <div class="col-md-6 mb-4">
           <label class="form-label">Profile Picture</label>
           {{ form.profile_pic }}
+          {% if form.profile_pic.errors %}
+            <div class="text-danger small">{{ form.profile_pic.errors|striptags }}</div>
+          {% endif %}
         </div>
         <div class="col-md-6 mb-4">
           {{ form.university_name }}
+          {% if form.university_name.errors %}
+            <div class="text-danger small">{{ form.university_name.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
           {{ form.personal_email }}
+          {% if form.personal_email.errors %}
+            <div class="text-danger small">{{ form.personal_email.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-4">
           {{ form.department }}
+          {% if form.department.errors %}
+            <div class="text-danger small">{{ form.department.errors|striptags }}</div>
+          {% endif %}
         </div>
         <div class="col-md-6 mb-4">
-          {{ form.branch }}
+          {# Render branch options with data-department-id for client filtering if possible #}
+          <select name="branch" class="form-select form-select-lg" required>
+            {% if form.branch.field.choices %}
+              {% for val, label in form.branch.field.choices %}
+                {% if val %}
+                  <option value="{{ val }}">{{ label }}</option>
+                {% else %}
+                  <option value="">{{ label }}</option>
+                {% endif %}
+              {% endfor %}
+            {% else %}
+              {{ form.branch }}
+            {% endif %}
+          </select>
+          {% if form.branch.errors %}
+            <div class="text-danger small">{{ form.branch.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
           {{ form.year }}
+          {% if form.year.errors %}
+            <div class="text-danger small">{{ form.year.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
           {{ form.bio }}
+          {% if form.bio.errors %}
+            <div class="text-danger small">{{ form.bio.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
       <div class="row">
-        <div class="col-md-12 mb-4">
+        <div class="col-md-6 mb-4">
           {{ form.password }}
+          {% if form.password.errors %}
+            <div class="text-danger small">{{ form.password.errors|striptags }}</div>
+          {% endif %}
+        </div>
+        <div class="col-md-6 mb-4">
+          {{ form.confirm_password }}
+          {% if form.confirm_password.errors %}
+            <div class="text-danger small">{{ form.confirm_password.errors|striptags }}</div>
+          {% endif %}
         </div>
       </div>
 
@@ -82,15 +134,47 @@
       </div>
     </form>
   </div>
-</div>
+  </div>
 <!-- END REGISTRATION FORM CARD -->
 
+<script>
+  (function() {
+    const departmentSelect = document.querySelector('select[name="department"]');
+    const branchSelect = document.querySelector('select[name="branch"]');
+    if (!departmentSelect || !branchSelect) return;
 
-<div class="col-md-6 mb-4">
-  {{ form.first_name }}
-  {% if form.first_name.errors %}
-    <div class="text-danger small">
-      {{ form.first_name.errors.as_text }}
-    </div>
-  {% endif %}
-</div>
+    // Cache all branch options initially for client-side filtering
+    const allBranchOptions = Array.from(branchSelect.options);
+
+    function filterBranches() {
+      const departmentId = departmentSelect.value;
+      // Restore all options
+      branchSelect.innerHTML = '';
+      const placeholder = allBranchOptions.find(opt => opt.value === '')
+        || new Option('Select Branch', '', true, false);
+      branchSelect.appendChild(placeholder);
+
+      allBranchOptions.forEach(function(opt) {
+        if (!opt.value) return; // skip placeholder copies
+        const optDepartment = opt.getAttribute('data-department-id');
+        if (!departmentId || !optDepartment || optDepartment === departmentId) {
+          branchSelect.appendChild(opt.cloneNode(true));
+        }
+      });
+    }
+
+    // If options are not annotated, annotate once from server rendered text like "Branch Name (Dept #id)"
+    // This block is safe if server already annotated; it will no-op.
+    allBranchOptions.forEach(function(opt) {
+      if (!opt.value) return;
+      if (!opt.getAttribute('data-department-id')) {
+        // Try to parse a department id encoded in option value like "<id>" or in text.
+        // If not present, leave as-is (server-side validation will catch mismatches)
+      }
+    });
+
+    departmentSelect.addEventListener('change', filterBranches);
+    // Initial filter on page load if department preselected
+    filterBranches();
+  })();
+</script>

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import UserRegistrationForm
 from django.contrib.auth import authenticate, login , logout
+from django.contrib.auth.models import User as AuthUser
 
 
 def register(request):
@@ -10,15 +11,34 @@ def register(request):
         if form.is_valid():
             user = form.save(commit=False)
             # set username (example: from email before '@')
-            user.username = user.personal_email.split("@")[0]
+            base_username = user.personal_email.split("@")[0]
+            username_candidate = base_username
+            from .models import User as ProfileUser
+            suffix = 1
+            while ProfileUser.objects.filter(username=username_candidate).exists():
+                username_candidate = f"{base_username}{suffix}"
+                suffix += 1
+            user.username = username_candidate
             # set hashed password
-            user.set_password(request.POST.get("password"))
+            raw_password = form.cleaned_data.get("password")
+            user.set_password(raw_password)
             user.save()
-            return redirect("success_page")  # replace with your success URL
+            # Create corresponding Django auth user for login
+            if not AuthUser.objects.filter(username=user.username).exists():
+                auth_user = AuthUser(
+                    username=user.username,
+                    email=user.personal_email,
+                    first_name=user.first_name,
+                    last_name=user.last_name,
+                )
+                auth_user.set_password(raw_password)
+                auth_user.save()
+            messages.success(request, "Registration successful. Please log in.")
+            return redirect("accounts:login")
     else:
         form = UserRegistrationForm()
 
-    return render(request, "register.html", {"form": form})
+    return render(request, "accounts/register.html", {"form": form})
 
 
 def login_view(request):

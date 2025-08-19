@@ -95,8 +95,8 @@
     </div>
     {% else %}
 
-      <a class="btn-getstarted" data-bs-toggle="modal" data-bs-target="#openLoginModal" href="{% url 'accounts:login' %}">Login</a>
-      <a class="btn-getstarted" data-bs-toggle="modal" data-bs-target="#openregisterModal" href="{% url 'accounts:register' %}">Register</a>
+      <a class="btn-getstarted" data-bs-toggle="modal" data-bs-target="#openLoginModal" href="#" onclick="event.preventDefault();">Login</a>
+      <a class="btn-getstarted" data-bs-toggle="modal" data-bs-target="#openregisterModal" href="#" onclick="event.preventDefault();">Register</a>
     {% endif %}
   
 </header>
@@ -115,7 +115,9 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content">
       <div class="modal-body">
-        {% include "accounts/register.html" %}
+        {% with form=registration_form %}
+          {% include "accounts/register.html" %}
+        {% endwith %}
       </div>
     </div>
   </div>
