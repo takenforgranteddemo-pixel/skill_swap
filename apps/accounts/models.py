@@ -43,5 +43,5 @@ class User(models.Model):
         self.current_password = make_password(raw_passoword)
 
     def check_password(self,raw_password):
-        from django.contrib.auth.handlers import check_password
+        from django.contrib.auth.hashers import check_password
         return check_password(raw_password,self.current_password)
