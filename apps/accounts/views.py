@@ -12,13 +12,14 @@ def register(request):
             # set username (example: from email before '@')
             user.username = user.personal_email.split("@")[0]
             # set hashed password
-            user.set_password(request.POST.get("password"))
+            user.set_password(form.cleaned_data.get("password"))
             user.save()
-            return redirect("success_page")  # replace with your success URL
+            messages.success(request, "Registration successful. Please log in.")
+            return redirect("accounts:login")
     else:
         form = UserRegistrationForm()
 
-    return render(request, "register.html", {"form": form})
+    return render(request, "accounts/register.html", {"form": form})
 
 
 def login_view(request):
