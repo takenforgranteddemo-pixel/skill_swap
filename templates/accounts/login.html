@@ -1,29 +1,154 @@
 <!-- LOGIN FORM CARD -->
 <div class="card shadow-2-strong" style="border-radius: 1rem;">
-    <div class="card-body p-5 text-center">
+    <div class="card-body p-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0">Sign In</h3>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
 
-    <h3 class="mb-5">Sign in</h3>
+        <!-- Success/Error Messages -->
+        <div id="loginMessages" style="display: none;">
+            <div class="alert alert-dismissible fade show" role="alert">
+                <span id="loginMessageText"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
 
-    <div class="mb-4">
-        <input type="email" id="typeEmailX-2" class="form-control form-control-lg" placeholder="Email" />
-    </div>
+        <form id="loginForm" method="POST">
+            {% csrf_token %}
 
-    <div class="mb-4">
-        <input type="password" id="typePasswordX-2" class="form-control form-control-lg" placeholder="Password" />
-    </div>
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li><strong>{{ field|title }}:</strong> {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
 
-    <!-- Checkbox -->
-    <div class="form-check d-flex justify-content-start mb-4">
-        <input class="form-check-input" type="checkbox" value="" id="form1Example3" />
-        <label class="form-check-label" for="form1Example3"> Remember password </label>
-    </div>
+            <div class="mb-4">
+                <label class="form-label" for="{{ form.email.id_for_label }}">Email Address <span class="text-danger">*</span></label>
+                {{ form.email }}
+                <div class="invalid-feedback" id="email_error"></div>
+            </div>
 
-    <hr class="my-4">
-    <button class="btn btn-primary btn-lg btn-block w-100" type="submit">Login</button>
+            <div class="mb-4">
+                <label class="form-label" for="{{ form.password.id_for_label }}">Password <span class="text-danger">*</span></label>
+                {{ form.password }}
+                <div class="invalid-feedback" id="password_error"></div>
+            </div>
 
+            <!-- Checkbox -->
+            <div class="form-check d-flex justify-content-start mb-4">
+                {{ form.remember_me }}
+                <label class="form-check-label ms-2" for="{{ form.remember_me.id_for_label }}">
+                    Remember me
+                </label>
+            </div>
 
+            <div class="d-grid">
+                <button class="btn btn-primary btn-lg" type="submit" id="loginSubmitBtn">
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="display: none;" id="loginSpinner"></span>
+                    Sign In
+                </button>
+            </div>
 
-
+            <div class="text-center mt-4">
+                <p class="mb-0">Don't have an account? 
+                    <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#openregisterModal" data-bs-dismiss="modal">Register here</a>
+                </p>
+            </div>
+        </form>
     </div>
 </div>
 <!-- END LOGIN FORM -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const submitBtn = document.getElementById('loginSubmitBtn');
+    const spinner = document.getElementById('loginSpinner');
+    const messagesDiv = document.getElementById('loginMessages');
+    const messageText = document.getElementById('loginMessageText');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            spinner.style.display = 'inline-block';
+            
+            // Clear previous errors
+            clearErrors();
+            
+            const formData = new FormData(loginForm);
+            
+            fetch('{% url "accounts:login" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showMessage('success', data.message);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url || '/';
+                    }, 1500);
+                } else {
+                    showErrors(data.errors);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showMessage('danger', 'An error occurred. Please try again.');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+            });
+        });
+    }
+
+    function showMessage(type, message) {
+        messagesDiv.style.display = 'block';
+        messagesDiv.querySelector('.alert').className = `alert alert-${type} alert-dismissible fade show`;
+        messageText.textContent = message;
+    }
+
+    function showErrors(errors) {
+        for (const [field, fieldErrors] of Object.entries(errors)) {
+            const errorDiv = document.getElementById(`${field}_error`);
+            const input = document.querySelector(`[name="${field}"]`);
+            
+            if (errorDiv && input) {
+                errorDiv.textContent = fieldErrors.join(', ');
+                errorDiv.style.display = 'block';
+                input.classList.add('is-invalid');
+            }
+        }
+        
+        if (errors.__all__) {
+            showMessage('danger', errors.__all__.join(', '));
+        }
+    }
+
+    function clearErrors() {
+        messagesDiv.style.display = 'none';
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+        });
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+    }
+});
+</script>

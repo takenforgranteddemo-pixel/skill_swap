@@ -1,9 +1,20 @@
 <!-- REGISTRATION FORM CARD -->
 <div class="card shadow-2-strong card-registration" style="border-radius: 15px;">
   <div class="card-body p-4 p-md-5">
-    <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 text-center">Registration Form</h3>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="mb-0">Registration Form</h3>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
     
-    <form method="POST" enctype="multipart/form-data">
+    <!-- Success/Error Messages -->
+    <div id="registerMessages" style="display: none;">
+      <div class="alert alert-dismissible fade show" role="alert">
+        <span id="registerMessageText"></span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    </div>
+    
+    <form id="registerForm" method="POST" enctype="multipart/form-data">
       {% csrf_token %}
 
       {% if form.errors %}
@@ -20,77 +31,231 @@
 
       <div class="row">
         <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.first_name.id_for_label }}">First Name <span class="text-danger">*</span></label>
           {{ form.first_name }}
+          <div class="invalid-feedback" id="first_name_error"></div>
         </div>
         <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.last_name.id_for_label }}">Last Name <span class="text-danger">*</span></label>
           {{ form.last_name }}
+          <div class="invalid-feedback" id="last_name_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
-          <h6 class="mb-2 pb-1">Gender:</h6>
-          {{ form.gender }}
+          <label class="form-label">Gender <span class="text-danger">*</span></label>
+          <div class="mt-2">
+            {% for choice in form.gender %}
+              <div class="form-check form-check-inline">
+                {{ choice.tag }}
+                <label class="form-check-label" for="{{ choice.id_for_label }}">
+                  {{ choice.choice_label }}
+                </label>
+              </div>
+            {% endfor %}
+          </div>
+          <div class="invalid-feedback" id="gender_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-4">
-          <label class="form-label">Profile Picture</label>
+          <label class="form-label" for="{{ form.profile_pic.id_for_label }}">Profile Picture</label>
           {{ form.profile_pic }}
+          <div class="form-text">Optional. Max 5MB. JPEG, PNG, GIF only.</div>
+          <div class="invalid-feedback" id="profile_pic_error"></div>
         </div>
         <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.university_name.id_for_label }}">University <span class="text-danger">*</span></label>
           {{ form.university_name }}
+          <div class="invalid-feedback" id="university_name_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
+          <label class="form-label" for="{{ form.personal_email.id_for_label }}">Personal Email <span class="text-danger">*</span></label>
           {{ form.personal_email }}
+          <div class="invalid-feedback" id="personal_email_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.department.id_for_label }}">Department <span class="text-danger">*</span></label>
           {{ form.department }}
+          <div class="invalid-feedback" id="department_error"></div>
         </div>
         <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.branch.id_for_label }}">Branch <span class="text-danger">*</span></label>
           {{ form.branch }}
+          <div class="invalid-feedback" id="branch_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
+          <label class="form-label" for="{{ form.year.id_for_label }}">Academic Year <span class="text-danger">*</span></label>
           {{ form.year }}
+          <div class="invalid-feedback" id="year_error"></div>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-12 mb-4">
+          <label class="form-label" for="{{ form.bio.id_for_label }}">Bio</label>
           {{ form.bio }}
+          <div class="form-text">Tell others about yourself (optional, max 250 characters)</div>
+          <div class="invalid-feedback" id="bio_error"></div>
         </div>
       </div>
 
       <div class="row">
-        <div class="col-md-12 mb-4">
+        <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.password.id_for_label }}">Password <span class="text-danger">*</span></label>
           {{ form.password }}
+          <div class="form-text">Minimum 8 characters</div>
+          <div class="invalid-feedback" id="password_error"></div>
+        </div>
+        <div class="col-md-6 mb-4">
+          <label class="form-label" for="{{ form.confirm_password.id_for_label }}">Confirm Password <span class="text-danger">*</span></label>
+          {{ form.confirm_password }}
+          <div class="invalid-feedback" id="confirm_password_error"></div>
         </div>
       </div>
 
       <div class="mt-4 pt-2">
-        <button type="submit" class="btn btn-primary btn-lg w-100">Register</button>
+        <button type="submit" class="btn btn-primary btn-lg w-100" id="registerSubmitBtn">
+          <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true" style="display: none;" id="registerSpinner"></span>
+          Register
+        </button>
+      </div>
+      
+      <div class="text-center mt-3">
+        <p class="mb-0">Already have an account? 
+          <a href="#" class="text-primary" data-bs-toggle="modal" data-bs-target="#openLoginModal" data-bs-dismiss="modal">Login here</a>
+        </p>
       </div>
     </form>
   </div>
 </div>
 <!-- END REGISTRATION FORM CARD -->
 
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const registerForm = document.getElementById('registerForm');
+    const submitBtn = document.getElementById('registerSubmitBtn');
+    const spinner = document.getElementById('registerSpinner');
+    const messagesDiv = document.getElementById('registerMessages');
+    const messageText = document.getElementById('registerMessageText');
 
-<div class="col-md-6 mb-4">
-  {{ form.first_name }}
-  {% if form.first_name.errors %}
-    <div class="text-danger small">
-      {{ form.first_name.errors.as_text }}
-    </div>
-  {% endif %}
-</div>
+    registerForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        submitBtn.disabled = true;
+        spinner.style.display = 'inline-block';
+        
+        // Clear previous errors
+        clearErrors();
+        
+        const formData = new FormData(registerForm);
+        
+        fetch('{% url "accounts:register" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showMessage('success', data.message);
+                setTimeout(() => {
+                    // Close register modal and open login modal
+                    document.querySelector('[data-bs-dismiss="modal"]').click();
+                    setTimeout(() => {
+                        document.querySelector('[data-bs-target="#openLoginModal"]').click();
+                    }, 500);
+                }, 1500);
+            } else {
+                showErrors(data.errors);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('danger', 'An error occurred. Please try again.');
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            spinner.style.display = 'none';
+        });
+    });
+
+    function showMessage(type, message) {
+        messagesDiv.style.display = 'block';
+        messagesDiv.querySelector('.alert').className = `alert alert-${type} alert-dismissible fade show`;
+        messageText.textContent = message;
+    }
+
+    function showErrors(errors) {
+        for (const [field, fieldErrors] of Object.entries(errors)) {
+            const errorDiv = document.getElementById(`${field}_error`);
+            const input = document.querySelector(`[name="${field}"]`);
+            
+            if (errorDiv && input) {
+                errorDiv.textContent = fieldErrors.join(', ');
+                errorDiv.style.display = 'block';
+                input.classList.add('is-invalid');
+            }
+        }
+        
+        if (errors.__all__) {
+            showMessage('danger', errors.__all__.join(', '));
+        }
+    }
+
+    function clearErrors() {
+        messagesDiv.style.display = 'none';
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.style.display = 'none';
+            el.textContent = '';
+        });
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+    }
+
+    // Dynamic branch loading based on department selection
+    const departmentSelect = document.querySelector('[name="department"]');
+    const branchSelect = document.querySelector('[name="branch"]');
+    
+    if (departmentSelect && branchSelect) {
+        departmentSelect.addEventListener('change', function() {
+            const departmentId = this.value;
+            
+            // Clear branch options
+            branchSelect.innerHTML = '<option value="">Select Branch</option>';
+            
+            if (departmentId) {
+                fetch(`{% url "accounts:get_branches" %}?department_id=${departmentId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.branches.forEach(branch => {
+                            const option = document.createElement('option');
+                            option.value = branch.id;
+                            option.textContent = branch.name;
+                            branchSelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error loading branches:', error);
+                    });
+            }
+        });
+    }
+});
+</script>
