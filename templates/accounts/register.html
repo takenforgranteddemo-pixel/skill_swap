@@ -3,7 +3,7 @@
   <div class="card-body p-4 p-md-5">
     <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 text-center">Registration Form</h3>
     
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" action="{% url 'accounts:register' %}" enctype="multipart/form-data">
       {% csrf_token %}
 
       {% if form.errors %}
@@ -85,12 +85,3 @@
 </div>
 <!-- END REGISTRATION FORM CARD -->
 
-
-<div class="col-md-6 mb-4">
-  {{ form.first_name }}
-  {% if form.first_name.errors %}
-    <div class="text-danger small">
-      {{ form.first_name.errors.as_text }}
-    </div>
-  {% endif %}
-</div>
